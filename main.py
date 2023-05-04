@@ -114,7 +114,6 @@ class Agent:
                 state = next_state
                 i += 1
 
-
                 if done:
                     self.steps.append(i)
                     if i > max_i: max_i = i;
