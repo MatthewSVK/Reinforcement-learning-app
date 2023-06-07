@@ -1,23 +1,24 @@
 import os
 import random
+import gym
 import numpy as np
 from collections import deque
+import tensorflow as tf
 from keras.models import Model, load_model
 from keras.layers import Input, Dense, Dropout
-from keras.optimizers import RMSprop
-from keras.initializers import Orthogonal
-import tensorflow as tf
+from keras.optimizers import Adam, RMSprop
 import datetime
-import gym
+from matplotlib import animation
+import matplotlib.pyplot as plt
 
 
-def neuralNetwork(shape, space):
+def NeuralNetwork(shape, space):
     x_input = Input(shape)
-    x = Dense(512, input_shape=(shape,), activation="relu", kernel_initializer="he_uniform")(x_input)
+    x = Dense(1024, input_shape=(shape,), activation="relu", kernel_initializer="he_uniform")(x_input)
+    x = Dropout(0.2)(x)
+    x = Dense(512, activation="relu", kernel_initializer="he_uniform")(x)
     x = Dropout(0.2)(x)
     x = Dense(256, activation="relu", kernel_initializer="he_uniform")(x)
-    x = Dropout(0.2)(x)
-    x = Dense(128, activation="relu", kernel_initializer="he_uniform")(x)
 
     x = Dense(space, activation="linear", kernel_initializer="he_uniform")(
         x)  # vystupna vrstva s 2 uzlami (vpravo, vlavo)
@@ -26,6 +27,20 @@ def neuralNetwork(shape, space):
     model.summary()
     return model
 
+
+def save_frames_as_gif(frames, path='./', filename='gym_animation.gif'):
+
+    #Mess with this to change frame size
+    plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi=72)
+
+    patch = plt.imshow(frames[0])
+    plt.axis('off')
+
+    def animate(i):
+        patch.set_data(frames[i])
+
+    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
+    anim.save(path + filename, writer='imagemagick', fps=60)
 
 class Agent:
     def __init__(self):
@@ -41,11 +56,16 @@ class Agent:
         self.e_dec = 0.5  # znizenie miery pri tom, ked je naucena
         self.gen_size = 150  # velkost jednej generacie skusit zvysit
         self.train_s = 1000
+        self.total_steps = []
         self.current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.log_dir = 'logs/dqn/' + self.current_time
+        self.log_dir = '/content/drive/MyDrive/Cartpole/logs/dqn/' + self.current_time
         self.summary_writer = tf.summary.create_file_writer(self.log_dir)
 
-        self.model = neuralNetwork((self.state_size,), self.action_size)
+        self.model = NeuralNetwork(self.state_size, self.action_size)
+
+        # self.model = NeuralNetwork((self.state_size,), self.action_size)
+
+        # load_model("temporary_cartpole20230508-103709.h5")
 
     def remember(self, state, action, reward, next_state, done):
         if len(self.memory) > self.train_s:
@@ -89,12 +109,10 @@ class Agent:
         self.model = load_model(name)
 
     def save(self, name):
-        self.model.save(name)
+        self.model.save("/content/drive/MyDrive/Cartpole/" + name)
 
     def run(self):
-        max_i = 0
-        counter = 0
-
+        count = 0
         for epoch in range(self.EPOCHS):
             state = self.env.reset()
             state = np.reshape(state, [1, self.state_size])
@@ -113,27 +131,49 @@ class Agent:
                 self.remember(state, action, reward, next_state, done)
                 state = next_state
                 i += 1
-
                 if done:
-                    self.steps.append(i)
-                    if i > max_i: max_i = i;
-                    print("epoch: {}/{}, iterations in epoch: {}, max_i: {}, exploration rate: {:.2}".format(epoch, self.EPOCHS, i, max_i, self.epsilon))
-
+                    print(
+                        "epoch: {}/{}, score: {}, exploration rate: {:.2}".format(epoch, self.EPOCHS, i, self.epsilon))
                     with self.summary_writer.as_default():
                         tf.summary.scalar('Steps in one Epoch', i, step=epoch)  # graf
-                        # tf.summary.scalar('losses', self.losses[epoch], step=epoch)
 
-                    if i >= 450 and flag == True:
-                        counter += 1
+                    self.total_steps.append(i)
+                    mean = np.mean(self.total_steps)
+                    if i > mean:
+                        print("Saving partialy trained model")
+                        self.save("temporary_cartpole" + self.current_time + ".h5")
+
+                    if i < 400:
+                        count = 0
+                    if i >= 400:
+                        count += 1
                         flag = False
-                    if counter == 3:
-                        print("Saving model")
-                        self.save_model("trained_model.h5")
-                        return
-                i += 1
+                        if count == 3:
+                            print("Saving trained model as cartpole-dqn.h5")
+                            self.save("cartpole-dqn.h5")
+                            return
                 self.replay()
+
+    def test(self):
+        self.load("trained_model.h5")
+        frames = []
+        for e in range(50):
+            state = self.env.reset()
+            done = False
+            i = 0
+            while not done:
+                frames.append(self.env.render())
+                action = self.env.action_space.sample()
+                result = self.env.step(action)
+                state, _, done, _ = result[:4]  # Unpack the first four values
+                i += 1
+                if done:
+                    print("epoch: {}/{}, score: {}".format(e, self.EPOCHS, i))
+                    break
+        self.env.close()
+        save_frames_as_gif(frames)
 
 
 if __name__ == "__main__":
     agent = Agent()
-    agent.run()
+    agent.test()
