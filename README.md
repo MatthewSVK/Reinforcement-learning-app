@@ -32,4 +32,4 @@ Pre zobrazenie generovaných grafov počas trénovania sa používa príkaz: "te
 
 Odkaz na GitHub repozitár: https://github.com/MatthewSVK/Reinforcement-learning-app
 
-Odkaz na Google Colaboratory s projketom (je potrebný STU mail): https://colab.research.google.com/drive/1LZW6WZ8zw_Sl5GacOOI0G5szjNfdkvsY?usp=sharing
+Odkaz na Google Colaboratory s projektom (je potrebný STU mail): https://colab.research.google.com/drive/1LZW6WZ8zw_Sl5GacOOI0G5szjNfdkvsY?usp=sharing
