@@ -157,7 +157,7 @@ class Agent:
     def test(self):
         self.load("trained_model.h5")
         frames = []
-        for e in range(50):
+        for e in range(1):
             state = self.env.reset()
             done = False
             i = 0
@@ -165,7 +165,7 @@ class Agent:
                 frames.append(self.env.render())
                 action = self.env.action_space.sample()
                 result = self.env.step(action)
-                state, _, done, _ = result[:4]  # Unpack the first four values
+                state, _, done, _ = result[:4]
                 i += 1
                 if done:
                     print("epoch: {}/{}, score: {}".format(e, self.EPOCHS, i))
@@ -176,4 +176,11 @@ class Agent:
 
 if __name__ == "__main__":
     agent = Agent()
-    agent.test()
+    skip_training = True
+
+    if skip_training:
+        agent.test()
+    else:
+        agent.run()
+        agent.test()
+

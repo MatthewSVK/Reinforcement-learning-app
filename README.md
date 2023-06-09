@@ -27,3 +27,9 @@ Pri spúšťaní programu si môžme vybrať medzi dvoma nastaveniami:
 - Testovanie: je nutné aby v koreňovom priečinku projektu sa nachádzal súbor s názvom "trained_model.h5", ktorý obsahuje váhy neurónovej siete. Program sa následne spustí a vytvorí GIF. Hodnota: True
 
 Pre voľbu režimu je nutné prepísať na riadku 179, hodnotu premennej skip_training podľa hodnoty uvedenej pri type spustenia.
+
+Pre zobrazenie generovaných grafov počas trénovania sa používa príkaz: "tensorboard --logdir logs/dqn"
+
+Odkaz na GitHub repozitár: https://github.com/MatthewSVK/Reinforcement-learning-app
+
+Odkaz na Google Colaboratory s projketom (je potrebný STU mail): https://colab.research.google.com/drive/1LZW6WZ8zw_Sl5GacOOI0G5szjNfdkvsY?usp=sharing
